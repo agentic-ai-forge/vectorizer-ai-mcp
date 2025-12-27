@@ -158,6 +158,15 @@ async def list_tools() -> list[Tool]:
                         "description": "Curve types to use",
                         "enum": ["all", "beziers_only", "lines_only", "arcs_and_lines"],
                     },
+                    "palette": {
+                        "type": "string",
+                        "description": (
+                            "Color palette mapping. Format: '[color][-> remapped][~ tolerance];' "
+                            "Use #RRGGBB for opaque, #RRGGBBAA for transparent. "
+                            "Example to make dark background transparent: '#0d1117 -> #00000000;' "
+                            "Fully transparent colors (#RRGGBB00) are omitted from result."
+                        ),
+                    },
                 },
                 "required": ["image"],
             },
@@ -276,6 +285,8 @@ async def _vectorize_image(client: VectorizerClient, args: dict[str, Any]) -> li
         options["processing.max_colors"] = args["max_colors"]
     if "curves" in args:
         options["output.curves"] = args["curves"]
+    if "palette" in args:
+        options["processing.palette"] = args["palette"]
 
     try:
         response = await client.vectorize(

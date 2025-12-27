@@ -107,6 +107,7 @@ Convert bitmap to vector graphics.
 | `output_path` | string | | Save output directly to this path |
 | `max_colors` | int | | Limit colors (0-256, 0=unlimited) |
 | `curves` | string | | all, beziers_only, lines_only, arcs_and_lines |
+| `palette` | string | | Color palette mapping (see below) |
 
 **Example:**
 ```python
@@ -115,6 +116,40 @@ vectorize_image(
   output_format="svg",
   mode="production",
   output_path="/path/to/logo.svg"
+)
+```
+
+#### Palette Parameter
+
+The `palette` parameter allows you to map or remove specific colors during vectorization. This is useful for:
+- Making backgrounds transparent
+- Remapping colors to a specific palette
+- Removing unwanted colors from the output
+
+**Format:** `[color][-> remapped][~ tolerance];`
+
+| Syntax | Description |
+|--------|-------------|
+| `#RRGGBB` | Opaque color |
+| `#RRGGBBAA` | Color with alpha (00 = transparent) |
+| `-> #color` | Remap to different color |
+| `~ 0.02` | Tolerance (0-2.0, default 2.0) |
+
+**Examples:**
+
+```python
+# Remove dark background (make transparent)
+vectorize_image(
+  image="/path/to/logo.png",
+  palette="#0d1117 -> #00000000;",
+  output_path="/path/to/logo-transparent.svg"
+)
+
+# Snap colors to specific palette
+vectorize_image(
+  image="/path/to/logo.png",
+  palette="#FF0000 ~ 0.02; #00FF00 ~ 0.02; #0000FF ~ 0.02; #00000000;",
+  output_path="/path/to/logo-limited.svg"
 )
 ```
 

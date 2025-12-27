@@ -2,11 +2,11 @@
 
 import base64
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from vectorizer_ai_mcp.server import _load_image, _save_file
+from vectorizer_ai_mcp.server import _load_image, _save_file, _vectorize_image
 
 
 class TestLoadImage:
@@ -86,3 +86,87 @@ class TestSaveFile:
         )
 
         assert "Parent directory does not exist" in result[0].text
+
+
+class TestVectorizeImage:
+    """Tests for _vectorize_image function."""
+
+    @pytest.mark.asyncio
+    async def test_palette_parameter_passed_to_api(self, tmp_path: Path):
+        """Test that palette parameter is correctly passed to the vectorize API."""
+        # Create test image file
+        test_image = tmp_path / "test.png"
+        test_image.write_bytes(b"fake png content")
+
+        # Mock the client
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.content = b"<svg>mock</svg>"
+        mock_response.headers = {"X-Credits-Charged": "1.0"}
+        mock_client.vectorize = AsyncMock(return_value=mock_response)
+
+        # Call with palette parameter
+        palette_value = "#0d1117 -> #00000000;"
+        await _vectorize_image(
+            mock_client,
+            {
+                "image": str(test_image),
+                "palette": palette_value,
+            },
+        )
+
+        # Verify palette was passed to the API
+        mock_client.vectorize.assert_called_once()
+        call_kwargs = mock_client.vectorize.call_args.kwargs
+        assert "processing.palette" in call_kwargs
+        assert call_kwargs["processing.palette"] == palette_value
+
+    @pytest.mark.asyncio
+    async def test_vectorize_without_palette(self, tmp_path: Path):
+        """Test vectorization works without palette parameter."""
+        test_image = tmp_path / "test.png"
+        test_image.write_bytes(b"fake png content")
+
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.content = b"<svg>mock</svg>"
+        mock_response.headers = {"X-Credits-Charged": "1.0"}
+        mock_client.vectorize = AsyncMock(return_value=mock_response)
+
+        await _vectorize_image(
+            mock_client,
+            {
+                "image": str(test_image),
+            },
+        )
+
+        # Verify palette was NOT passed
+        call_kwargs = mock_client.vectorize.call_args.kwargs
+        assert "processing.palette" not in call_kwargs
+
+    @pytest.mark.asyncio
+    async def test_all_processing_options(self, tmp_path: Path):
+        """Test all processing options are passed correctly."""
+        test_image = tmp_path / "test.png"
+        test_image.write_bytes(b"fake png content")
+
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.content = b"<svg>mock</svg>"
+        mock_response.headers = {"X-Credits-Charged": "1.0"}
+        mock_client.vectorize = AsyncMock(return_value=mock_response)
+
+        await _vectorize_image(
+            mock_client,
+            {
+                "image": str(test_image),
+                "palette": "#000000 -> #00000000;",
+                "max_colors": 16,
+                "curves": "beziers_only",
+            },
+        )
+
+        call_kwargs = mock_client.vectorize.call_args.kwargs
+        assert call_kwargs["processing.palette"] == "#000000 -> #00000000;"
+        assert call_kwargs["processing.max_colors"] == 16
+        assert call_kwargs["output.curves"] == "beziers_only"
