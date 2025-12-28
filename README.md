@@ -26,14 +26,23 @@ pip install .
 
 ## ⚙️ Configuration
 
-Set environment variables:
+Configuration is managed via environment variables using [pydantic-settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/).
 
-```bash
-export VECTORIZER_API_ID="your-api-id"
-export VECTORIZER_API_SECRET="your-api-secret"
-```
+### Required Variables
+
+| Variable | Description |
+|----------|-------------|
+| `VECTORIZER_API_ID` | Your Vectorizer.AI API ID |
+| `VECTORIZER_API_SECRET` | Your Vectorizer.AI API secret |
 
 🔑 Get your credentials at [vectorizer.ai/api](https://vectorizer.ai/api).
+
+### Optional Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VECTORIZER_API_BASE_URL` | `https://api.vectorizer.ai/api/v1` | API base URL |
+| `VECTORIZER_TIMEOUT` | `180.0` | Request timeout in seconds (max 600) |
 
 ### Using direnv (recommended)
 
@@ -42,6 +51,8 @@ Create a `.envrc` file in the project directory:
 ```bash
 export VECTORIZER_API_ID="your-api-id"
 export VECTORIZER_API_SECRET="your-api-secret"
+# Optional: increase timeout for large images
+export VECTORIZER_TIMEOUT="300"
 ```
 
 Then run `direnv allow` to load the environment.
